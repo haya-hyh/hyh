@@ -6,7 +6,7 @@ from scipy.stats import poisson, norm
 import math
 
 class SEEM:
-    def __init__(self, k, iter, limit=0.000001):
+    def __init__(self, k, iter, limit=0.00001):
         self.limit = limit
         self.iter = iter
         self.X0 = []
@@ -62,6 +62,9 @@ class SEEM:
 
     def E_part(self):
         r = []
+        for i in range(k):
+            self.miu0[i] = np.random.choice(self.X0)
+            self.miu1[i] = np.random.choice(self.X1)
         for i in range(self.number):
             s = 0
             for j in range(self.k):
@@ -93,11 +96,15 @@ class SEEM:
             for i in range(self.number):
                 self.cov0[k] += self.r[i][k] * ((self.X0[i]-self.miu0[k])**2)
                 self.cov1[k] += self.r[i][k] * ((self.X0[i]-self.miu0[k])**2)
-            self.cov0[k] /= n
-            self.cov1[k] /= n
+            self.cov0=self.cov0.astype(np.float64)
+            self.cov1 = self.cov1.astype(np.float64)
+            n = n.astype(np.float64)
+            self.cov0[k] = (self.cov0[k] / n)**0.5
+            self.cov1[k] = (self.cov1[k] / n)**0.5
 
     def loglike(self):
         p = np.zeros((self.number, self.k))
+        print('iter')
         for i in range(self.number):
             for j in range(self.k):
                 p[i][j] = self.pi[j] * poisson.pmf(self.S[i], self.lamda[j])\
@@ -120,7 +127,7 @@ class SEEM:
             i += 1
 
 k = 3
-f = SEEM(k,20)
+f = SEEM(k,50)
 f.iteration()
 
 strthlist = np.zeros(f.number)
@@ -128,7 +135,8 @@ locationlist = np.zeros((f.number, 2))
 catlist = np.zeros(f.number)
 
 #creat datalist
-
+print(f.miu0)
+print(f.miu1)
 for i in range(f.number):
     j = np.random.choice(k, p=f.pi)
     x0 = np.random.normal(loc=f.miu0[j], scale=f.cov0[j])
@@ -140,12 +148,16 @@ for i in range(f.number):
 
 #plot
 plt.figure(1)
+plt.xlim((-1, 10))
 plt.scatter(f.X0, f.X1, s=f.S)
 plt.show()
 
 plt.figure(2)
-plt.scatter(locationlist[:,0],locationlist[:,1], strthlist)
+plt.xlim((-1, 10))
+plt.scatter(locationlist[:,0],locationlist[:,1], s=strthlist)
+
 plt.show()
+
 
 
 
