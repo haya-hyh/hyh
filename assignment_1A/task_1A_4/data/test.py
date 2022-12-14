@@ -2,11 +2,11 @@
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
-from scipy.stats import poisson, multivariate_normal
+from scipy.stats import poisson, norm
 import math
 
 class SEEM:
-    def __init__(self, k, iter, limit=0.001):
+    def __init__(self, k, iter, limit=0.000001):
         self.limit = limit
         self.iter = iter
         self.X0 = []
@@ -66,8 +66,8 @@ class SEEM:
             s = 0
             for j in range(self.k):
                 self.r[i][j] = self.pi[j] * poisson.pmf(self.S[i],self.lamda[j])*\
-                               multivariate_normal.pdf(self.X0[i],mean=self.miu0[j],cov=self.cov0[j])\
-                               *multivariate_normal.pdf(self.X1[i],mean=self.miu1[j],cov=self.cov1[j])
+                               norm.pdf(self.X0[i],loc=self.miu0[j],scale=self.cov0[j])\
+                               *norm.pdf(self.X1[i],loc=self.miu1[j],scale=self.cov1[j])
 
                 s += self.r[i][j]
             r.append(s)
@@ -101,8 +101,8 @@ class SEEM:
         for i in range(self.number):
             for j in range(self.k):
                 p[i][j] = self.pi[j] * poisson.pmf(self.S[i], self.lamda[j])\
-                          * multivariate_normal.pdf(self.X0[i], mean=self.miu0[j], cov=self.cov0[j])\
-                          * multivariate_normal.pdf(self.X1[i], mean=self.miu1[j], cov=self.cov1[j])
+                          * norm.pdf(self.X0[i], loc=self.miu0[j], scale=self.cov0[j])\
+                          * norm.pdf(self.X1[i], loc=self.miu1[j], scale=self.cov1[j])
         likelihood = np.sum(np.log(np.sum(p, axis=1)))
         if np.abs(self.likelihood-likelihood) < self.limit:
             return False
@@ -120,7 +120,7 @@ class SEEM:
             i += 1
 
 k = 3
-f = SEEM(k,10)
+f = SEEM(k,20)
 f.iteration()
 
 strthlist = np.zeros(f.number)
