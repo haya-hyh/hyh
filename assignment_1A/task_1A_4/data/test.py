@@ -1,4 +1,3 @@
-# yonghong HUANG (CIEL)
 # yonghong HUANG
 import numpy as np
 import sys
@@ -20,8 +19,8 @@ class SEEM:
         self.lamda= [] #lambda
         self.cov0 = []
         self.cov1 = []
-        self.miu0 = np.zeros((self.k, 2))
-        self.miu1 = np.zeros((self.k, 2))
+        self.miu0 = np.zeros(self.k)
+        self.miu1 = np.zeros(self.k)
         self.likelihood = 0
 
 
@@ -72,19 +71,22 @@ class SEEM:
 
                 s += self.r[i][j]
             r.append(s)
-
+        self.r = np.array(self.r)
+        r = np.array(r)
+        self.r = self.r.astype(np.float64)
+        r = r.astype(np.float64)
         for i in range(self.number):
             for j in range(self.k):
                 self.r[i][j] /= r[i]
 
     def M_part(self):
-        self.r = np.array(self.r)
+
         for k in range(self.k):
 
             # print(np.array(self.X0).shape)
             # print(np.array(self.r[:,k]).shape)
             n = np.sum(self.r[:, k])
-            self.miu0[k] = np.sum(self.r[:, k]*self.X0) / n
+            self.miu0[k] = np.dot(self.r[:, k], self.X0) / n
             self.miu1[k] = np.dot(self.r[:, k], self.X1) / n
             self.lamda[k] = np.dot(self.S, self.r[:, k]) / n
             self.pi[k] = n / self.number
@@ -100,7 +102,7 @@ class SEEM:
             for j in range(self.k):
                 p[i][j] = self.pi[j] * poisson.pmf(self.S[i], self.lamda[j])\
                           * multivariate_normal.pdf(self.X0[i], mean=self.miu0[j], cov=self.cov0[j])\
-                          *multivariate_normal.pdf(self.X1[i], mean=self.miu1[j], cov=self.cov1[j])
+                          * multivariate_normal.pdf(self.X1[i], mean=self.miu1[j], cov=self.cov1[j])
         likelihood = np.sum(np.log(np.sum(p, axis=1)))
         if np.abs(self.likelihood-likelihood) < self.limit:
             return False
@@ -117,9 +119,34 @@ class SEEM:
                 break
             i += 1
 
-
-f = SEEM(6,50,0.001)
+k = 3
+f = SEEM(k,10)
 f.iteration()
+
+strthlist = np.zeros(f.number)
+locationlist = np.zeros((f.number, 2))
+catlist = np.zeros(f.number)
+
+#creat datalist
+
+for i in range(f.number):
+    j = np.random.choice(k, p=f.pi)
+    x0 = np.random.normal(loc=f.miu0[j], scale=f.cov0[j])
+    x1 = np.random.normal(loc=f.miu1[j], scale=f.cov1[j])
+    locationlist[i][0] = x0
+    locationlist[i][1] = x1
+    strthlist[i] = np.random.poisson(f.lamda[j])
+    catlist[i] = j
+
+#plot
+plt.figure(1)
+plt.scatter(f.X0, f.X1, s=f.S)
+plt.show()
+
+plt.figure(2)
+plt.scatter(locationlist[:,0],locationlist[:,1], strthlist)
+plt.show()
+
 
 
 
